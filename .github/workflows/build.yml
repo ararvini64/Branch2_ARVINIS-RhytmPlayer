@@ -21,37 +21,19 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-
-    - name: Force Clean and Rebuild Gradle Wrapper
+    - name: Build APK directly with System Gradle
       run: |
-        # پیدا کردن پوشه اصلی پروژه اندروید
+        # پیدا کردن مسیر اصلی فایل build.gradle
         BUILD_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
         if [ -z "$BUILD_FILE" ]; then
-          echo "پروژه اندروید پیدا نشد!"
+          echo "پروژه پیدا نشد!"
           exit 1
         fi
         PROJECT_DIR=$(dirname "$BUILD_FILE")
         cd "$PROJECT_DIR"
         
-        # پاک‌سازی پوشه ناقص قبلی gradle
-        rm -rf gradle/wrapper/
-        
-        # دانلود و جایگزینی مستقیم gradle-wrapper.jar
-        mkdir -p gradle/wrapper
-        curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.0.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
-        
-        # ساخت مجدد فایل gradlew
-        gradle wrapper --gradle-version 8.0
-        chmod +x gradlew
-
-    - name: Build APK with Gradle
-      run: |
-        BUILD_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
-        PROJECT_DIR=$(dirname "$BUILD_FILE")
-        cd "$PROJECT_DIR"
-        ./gradlew assembleDebug --no-daemon
+        # کامپایل مستقیم بدون استفاده از فایل‌های مفقودشده wrapper
+        gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
