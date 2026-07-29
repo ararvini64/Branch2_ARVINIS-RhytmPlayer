@@ -24,22 +24,33 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
-    - name: Generate Fresh Gradle Wrapper & Build APK
+    - name: Force Clean and Rebuild Gradle Wrapper
       run: |
-        # پیدا کردن مسیر دقیق پروژه اندروید
-        GRADLEW_PATH=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
-        if [ -z "$GRADLEW_PATH" ]; then
-          echo "پروژه پیدا نشد!"
+        # پیدا کردن پوشه اصلی پروژه اندروید
+        BUILD_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
+        if [ -z "$BUILD_FILE" ]; then
+          echo "پروژه اندروید پیدا نشد!"
           exit 1
         fi
-        PROJECT_DIR=$(dirname "$GRADLEW_PATH")
+        PROJECT_DIR=$(dirname "$BUILD_FILE")
         cd "$PROJECT_DIR"
         
-        # ساخت کامل و تازه فایل‌های Gradle Wrapper بدون نیاز به فایل‌های قبلی
+        # پاک‌سازی پوشه ناقص قبلی gradle
+        rm -rf gradle/wrapper/
+        
+        # دانلود و جایگزینی مستقیم gradle-wrapper.jar
+        mkdir -p gradle/wrapper
+        curl -sL https://raw.githubusercontent.com/gradle/gradle/v8.0.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+        
+        # ساخت مجدد فایل gradlew
         gradle wrapper --gradle-version 8.0
         chmod +x gradlew
-        
-        # ساخت فایل APK
+
+    - name: Build APK with Gradle
+      run: |
+        BUILD_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
+        PROJECT_DIR=$(dirname "$BUILD_FILE")
+        cd "$PROJECT_DIR"
         ./gradlew assembleDebug --no-daemon
 
     - name: Upload APK Artifact
