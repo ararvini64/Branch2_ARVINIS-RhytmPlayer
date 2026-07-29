@@ -15,32 +15,31 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up JDK 11
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
 
-    - name: Upgrade & Regenerate Gradle Wrapper
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Generate Fresh Gradle Wrapper & Build APK
       run: |
-        GRADLEW_PATH=$(find . -name "gradlew" -type f | head -n 1)
+        # پیدا کردن مسیر دقیق پروژه اندروید
+        GRADLEW_PATH=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
         if [ -z "$GRADLEW_PATH" ]; then
-          echo "فایل gradlew پیدا نشد!"
+          echo "پروژه پیدا نشد!"
           exit 1
         fi
         PROJECT_DIR=$(dirname "$GRADLEW_PATH")
         cd "$PROJECT_DIR"
         
-        # نصب گریدل و ارتقای wrapper به نسخه سازگار با جاوا ۱۱
-        sudo apt-get update && sudo apt-get install -y gradle
-        gradle wrapper --gradle-version 7.5
+        # ساخت کامل و تازه فایل‌های Gradle Wrapper بدون نیاز به فایل‌های قبلی
+        gradle wrapper --gradle-version 8.0
         chmod +x gradlew
-
-    - name: Build APK with Gradle
-      run: |
-        GRADLEW_PATH=$(find . -name "gradlew" -type f | head -n 1)
-        PROJECT_DIR=$(dirname "$GRADLEW_PATH")
-        cd "$PROJECT_DIR"
+        
+        # ساخت فایل APK
         ./gradlew assembleDebug --no-daemon
 
     - name: Upload APK Artifact
