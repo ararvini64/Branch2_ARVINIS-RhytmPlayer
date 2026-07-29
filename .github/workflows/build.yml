@@ -21,9 +21,9 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Enable AndroidX & Build APK
+    - name: Build APK with System Gradle
       run: |
-        # پیدا کردن مسیر اصلی پروژه
+        # 1. پیدا کردن پوشه اصلی پروژه
         BUILD_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" | head -n 1)
         if [ -z "$BUILD_FILE" ]; then
           echo "پروژه پیدا نشد!"
@@ -31,12 +31,12 @@ jobs:
         fi
         PROJECT_DIR=$(dirname "$BUILD_FILE")
         cd "$PROJECT_DIR"
-        
-        # فعال‌سازی خودکار AndroidX در gradle.properties
+
+        # 2. فعال‌سازی AndroidX برای حل خطای dependency
         echo "android.useAndroidX=true" >> gradle.properties
         echo "android.enableJetifier=true" >> gradle.properties
-        
-        # کامپایل و ساخت APK
+
+        # 3. کامپایل مستقیم با گریدل سیستم (بدون نیاز به gradlew)
         gradle assembleDebug --no-daemon
 
     - name: Upload APK Artifact
